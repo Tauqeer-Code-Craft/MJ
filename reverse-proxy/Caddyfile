@@ -1,0 +1,14 @@
+{
+    # Global options
+    email admin@tauqeer.site
+    acme_ca https://acme-v02.api.letsencrypt.org/directory
+}
+
+# Default site (optional)
+:80 {
+    respond "Welcome to SkyDeploy!"
+}
+
+my-first-app.tauqeer.site {
+    reverse_proxy localhost:3001
+}
