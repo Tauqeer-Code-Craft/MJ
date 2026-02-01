@@ -4,8 +4,9 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { checkHealth } from './services/api';
 import Landing from './pages/Landing';
 import Dashboard from './pages/Dashboard';
+import Databases from './pages/Databases';
 import { Login, Register } from './pages/Auth';
-import { Cloud, LogOut, User as UserIcon, Activity } from 'lucide-react';
+import { Cloud, LogOut, User as UserIcon, Activity, Database, LayoutGrid } from 'lucide-react';
 import { Button } from './components/UI';
 
 const ProtectedRoute = ({ children }: React.PropsWithChildren) => {
@@ -32,10 +33,29 @@ const Navbar = () => {
   return (
     <nav className={`fixed top-0 left-0 right-0 z-40 border-b border-zinc-800/50 backdrop-blur-md ${isLanding ? 'bg-black/50' : 'bg-black/80'}`}>
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-        <Link to="/" className="flex items-center gap-2 font-bold text-lg tracking-tight">
-          <Cloud className="h-5 w-5 text-white" />
-          <span>SkyDeploy</span>
-        </Link>
+        <div className="flex items-center gap-8">
+          <Link to="/" className="flex items-center gap-2 font-bold text-lg tracking-tight">
+            <Cloud className="h-5 w-5 text-white" />
+            <span>SkyDeploy</span>
+          </Link>
+
+          {isAuthenticated && (
+            <div className="hidden md:flex items-center gap-6 text-sm font-medium">
+              <Link 
+                to="/dashboard" 
+                className={`flex items-center gap-2 hover:text-white transition-colors ${location.pathname === '/dashboard' ? 'text-white' : 'text-zinc-400'}`}
+              >
+                <LayoutGrid className="h-4 w-4" /> Dashboard
+              </Link>
+              <Link 
+                to="/databases" 
+                className={`flex items-center gap-2 hover:text-white transition-colors ${location.pathname === '/databases' ? 'text-white' : 'text-zinc-400'}`}
+              >
+                <Database className="h-4 w-4" /> Databases
+              </Link>
+            </div>
+          )}
+        </div>
         
         <div className="flex items-center gap-4">
           <div className="hidden md:flex items-center gap-2 text-xs font-mono text-zinc-500 border border-zinc-800 rounded-full px-3 py-1 bg-zinc-900/50">
@@ -86,6 +106,14 @@ const App = () => {
               element={
                 <ProtectedRoute>
                   <Dashboard />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/databases" 
+              element={
+                <ProtectedRoute>
+                  <Databases />
                 </ProtectedRoute>
               } 
             />

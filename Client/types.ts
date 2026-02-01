@@ -20,6 +20,18 @@ export interface AppData {
   project_root?: string;
 }
 
+export interface Database {
+  id?: string;
+  name: string;
+  connection_uri: string;
+  status?: string;
+}
+
+export interface CreateDatabaseRequest {
+  name: string;
+  demoMode?: boolean;
+}
+
 export interface DeployRequest {
   app_name: string;
   git_repo_url: string;

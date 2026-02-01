@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { AuthResponse, DeployRequest, RedeployRequest, AppData } from '../types';
+import { AuthResponse, DeployRequest, RedeployRequest, AppData, Database, CreateDatabaseRequest } from '../types';
 
 // In a real app, this would be an environment variable
 const API_BASE_URL = 'http://localhost:4000';
@@ -51,6 +51,30 @@ export const redeployApp = async (appName: string, data: RedeployRequest): Promi
 
 export const deleteApp = async (appName: string): Promise<{ success: boolean; message: string }> => {
   const response = await api.delete(`/apps/${appName}`);
+  return response.data;
+};
+
+// Database Services
+export const getDatabases = async (): Promise<Database[]> => {
+  try {
+    const response = await api.get('/databases');
+    // Handle wrapped response { success: true, databases: [...] } or direct array
+    if (response.data && response.data.databases && Array.isArray(response.data.databases)) {
+      return response.data.databases;
+    }
+    return Array.isArray(response.data) ? response.data : [];
+  } catch (error) {
+    // Return empty array if endpoint doesn't exist yet or fails
+    return [];
+  }
+};
+
+export const createDatabase = async (data: CreateDatabaseRequest): Promise<Database> => {
+  const response = await api.post('/databases', data);
+  // Handle wrapped response: { success: true, database: { ... } }
+  if (response.data && response.data.database) {
+    return response.data.database;
+  }
   return response.data;
 };
 

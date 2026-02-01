@@ -3,6 +3,8 @@ const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
 const { exec } = require('child_process');
 const fs = require('fs');
+const crypto = require('crypto'); // CommonJS
+
 
 const app = express();
 app.use(bodyParser.json());
@@ -14,7 +16,7 @@ app.use(cors());
 
 // Or, allow only your dashboard domain:
 app.use(cors({
-  origin: ['http://localhost:3000/', 'http://192.168.0.105:3000/','http://172.20.144.1:3000/'],
+  origin: ['http://localhost:3000', 'http://192.168.0.105:3000','http://172.20.144.1:3000'],
   methods: ['GET','POST','DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
@@ -129,6 +131,20 @@ userSchema.pre('save', async function() {
 
 const UserModel = mongoose.model('User', userSchema);
 
+/* ----------------------------------------------------
+    DB model
+---------------------------------------------------- */
+const dbSchema = new mongoose.Schema({
+  name: { type: String, unique: true, required: true },
+  type: { type: String, default: 'postgres' },
+  connection_uri: { type: String, required: true },
+  container_id: String,
+  volume: String,
+  status: { type: String, default: 'running' }
+}, { timestamps: true });
+
+const DBModel = mongoose.model('Database', dbSchema);
+
 // register
 app.post('/register', async (req, res) => {
   try {
@@ -238,6 +254,52 @@ skydeploy-build-python
 
   return execPromise(cmd);
 }
+
+function execPromised(cmd) {
+  return new Promise((resolve, reject) => {
+    exec(cmd, (err, stdout, stderr) => {
+      if (err) return reject(stderr || err.message);
+      resolve(stdout.trim());
+    });
+  });
+}
+
+/**
+ * Deploy a PostgreSQL container
+ * @param {Object} options
+ * @param {string} options.name - DB name
+ * @param {boolean} options.demoMode - If true, expose to localhost for PgAdmin
+ * @returns {Object} { container_id, volume, connection_uri }
+ */
+async function deployPostgres({ name, demoMode = false }) {
+  const user = `user_${name}`;
+  const password = crypto.randomBytes(12).toString('hex');
+  const database = name;
+  const volume = `skydeploy-pg-${name}`;
+
+  const portMapping = demoMode ? '-p 5433:5432' : '';
+
+  const cmd = `
+docker run -d \
+--name skydeploy-db-${name} \
+--network skydeploy-net \
+-e POSTGRES_USER=${user} \
+-e POSTGRES_PASSWORD=${password} \
+-e POSTGRES_DB=${database} \
+-v ${volume}:/var/lib/postgresql/data \
+${portMapping} \
+postgres:16
+`.trim();
+
+  const container_id = await execPromised(cmd);
+
+  const connection_uri = demoMode
+    ? `postgresql://${user}:${password}@localhost:5433/${database}`
+    : `postgresql://${user}:${password}@skydeploy-db-${name}:5432/${database}`;
+
+  return { container_id, volume, connection_uri };
+}
+
 
 /* ----------------------------------------------------
    Routes
@@ -364,6 +426,43 @@ app.get('/apps/:app_name', async (req, res) => {
   const app = await AppModel.findOne({ app_name: req.params.app_name });
   if (!app) return res.status(404).json({ error: 'Not found' });
   res.json(app);
+});
+
+// DB route
+// POST /databases — create DB
+app.post('/databases', async (req, res) => {
+  try {
+    const { name, demoMode = false } = req.body;
+
+    // Check if DB already exists
+    if (await DBModel.findOne({ name })) {
+      throw new Error('Database already exists');
+    }
+
+    // Deploy Postgres
+    const result = await deployPostgres({ name, demoMode });
+
+    // Save DB in Mongo
+    const db = await DBModel.create({
+      name,
+      type: 'postgres',
+      container_id: result.container_id,
+      volume: result.volume,
+      connection_uri: result.connection_uri,
+      status: 'running'
+    });
+
+    res.json({
+      success: true,
+      database: {
+        name: db.name,
+        connection_uri: db.connection_uri
+      }
+    });
+
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
 });
 
 /* ----------------------------------------------------
