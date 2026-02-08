@@ -173,7 +173,6 @@ app.post('/register', async (req, res) => {
   }
 });
 
-
 // auth route 
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
@@ -464,6 +463,55 @@ app.post('/databases', async (req, res) => {
     res.status(400).json({ success: false, error: err.message });
   }
 });
+
+// GET /apps/:app_name/details — fetch full app info for frontend
+app.get('/apps/:app_name/details', async (req, res) => {
+  try {
+    const { app_name } = req.params;
+
+    // Find the app
+    const app = await AppModel.findOne({ app_name });
+    if (!app) return res.status(404).json({ success: false, error: 'App not found' });
+
+    // Optional: if this app is linked to a DB, you can include DB info
+    // Example: suppose you store database name in appDoc (you can adjust if needed)
+    let database = null;
+    if (app.database_name) {
+      database = await DBModel.findOne({ name: app.database_name });
+      if (database) {
+        database = {
+          name: database.name,
+          type: database.type,
+          connection_uri: database.connection_uri,
+          status: database.status
+        };
+      }
+    }
+
+    // Send combined info
+    res.json({
+      success: true,
+      app: {
+        app_name: app.app_name,
+        framework: app.framework,
+        app_type: app.app_type,
+        git_repo_url: app.git_repo_url,
+        project_root: app.project_root,
+        port: app.port,
+        container_id: app.container_id,
+        access_url: app.access_url,
+        status: app.status,
+        createdAt: app.createdAt,
+        updatedAt: app.updatedAt,
+        database // null if none
+      }
+    });
+
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 
 /* ----------------------------------------------------
    Start

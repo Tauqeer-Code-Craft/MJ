@@ -8,6 +8,13 @@ export interface AuthResponse {
   token: string;
 }
 
+export interface DatabaseInfo {
+  name: string;
+  type?: string;
+  connection_uri?: string;
+  status?: string;
+}
+
 export interface AppData {
   app_name: string;
   git_repo_url: string;
@@ -18,6 +25,9 @@ export interface AppData {
   access_url?: string;
   status: 'running' | 'stopped' | 'building' | 'failed';
   project_root?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  database?: DatabaseInfo | null;
 }
 
 export interface Database {

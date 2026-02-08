@@ -5,6 +5,7 @@ import { checkHealth } from './services/api';
 import Landing from './pages/Landing';
 import Dashboard from './pages/Dashboard';
 import Databases from './pages/Databases';
+import AppDetails from './pages/AppDetails';
 import { Login, Register } from './pages/Auth';
 import { Cloud, LogOut, User as UserIcon, Activity, Database, LayoutGrid } from 'lucide-react';
 import { Button } from './components/UI';
@@ -106,6 +107,14 @@ const App = () => {
               element={
                 <ProtectedRoute>
                   <Dashboard />
+                </ProtectedRoute>
+              } 
+            />
+             <Route 
+              path="/apps/:appName" 
+              element={
+                <ProtectedRoute>
+                  <AppDetails />
                 </ProtectedRoute>
               } 
             />

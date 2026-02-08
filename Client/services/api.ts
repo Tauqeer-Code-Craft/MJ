@@ -35,8 +35,8 @@ export const getApps = async (): Promise<AppData[]> => {
 };
 
 export const getAppDetails = async (appName: string): Promise<AppData> => {
-  const response = await api.get(`/apps/${appName}`);
-  return response.data;
+  const response = await api.get(`/apps/${appName}/details`);
+  return response.data.app;
 };
 
 export const deployApp = async (data: DeployRequest): Promise<{ success: boolean; app: AppData }> => {

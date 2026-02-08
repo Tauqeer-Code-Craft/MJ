@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { getApps, deployApp, redeployApp, deleteApp } from '../services/api';
+import { getApps, deployApp } from '../services/api';
 import { AppData, FRAMEWORKS } from '../types';
 import { Button, Input, Select, Badge, Modal } from '../components/UI';
-import { Plus, RefreshCw, Trash2, ExternalLink, GitBranch, Box, Terminal } from 'lucide-react';
+import { Plus, ExternalLink, GitBranch, Box, Terminal, ArrowRight, Server } from 'lucide-react';
 
 const Dashboard: React.FC = () => {
   const { showToast } = useAuth();
@@ -12,12 +13,7 @@ const Dashboard: React.FC = () => {
   
   // Modals state
   const [isDeployOpen, setIsDeployOpen] = useState(false);
-  const [isRedeployOpen, setIsRedeployOpen] = useState(false);
-  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   
-  // Selected App for actions
-  const [selectedApp, setSelectedApp] = useState<AppData | null>(null);
-
   // Forms State
   const [deployForm, setDeployForm] = useState({
     app_name: '',
@@ -27,7 +23,6 @@ const Dashboard: React.FC = () => {
     env_vars: '',
   });
 
-  const [redeployEnv, setRedeployEnv] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
 
   const fetchApps = async () => {
@@ -75,37 +70,6 @@ const Dashboard: React.FC = () => {
     }
   };
 
-  const handleRedeploy = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedApp) return;
-    setActionLoading(true);
-    try {
-      await redeployApp(selectedApp.app_name, { ENV_KEYS: handleEnvProcessing(redeployEnv) });
-      showToast('Redeployment initiated', 'success');
-      setIsRedeployOpen(false);
-      fetchApps();
-    } catch (err) {
-      showToast('Redeployment failed', 'error');
-    } finally {
-      setActionLoading(false);
-    }
-  };
-
-  const handleDelete = async () => {
-    if (!selectedApp) return;
-    setActionLoading(true);
-    try {
-      await deleteApp(selectedApp.app_name);
-      showToast('App deleted successfully', 'success');
-      setIsDeleteOpen(false);
-      fetchApps();
-    } catch (err) {
-      showToast('Failed to delete app', 'error');
-    } finally {
-      setActionLoading(false);
-    }
-  };
-
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-4">
@@ -134,16 +98,19 @@ const Dashboard: React.FC = () => {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {apps.map((app) => (
-            <div key={app.app_name} className="group relative flex flex-col justify-between rounded-lg border border-zinc-800 bg-zinc-950 p-6 transition-all hover:border-zinc-500 hover:shadow-lg">
+            <Link 
+              key={app.app_name} 
+              to={`/apps/${app.app_name}`}
+              className="group relative flex flex-col justify-between rounded-lg border border-zinc-800 bg-zinc-950 p-6 transition-all hover:border-zinc-500 hover:shadow-lg"
+            >
               <div>
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center space-x-3">
                     <div className="flex h-10 w-10 items-center justify-center rounded-full bg-zinc-900 border border-zinc-800">
-                      {/* Simple icon based on first letter or generic */}
                       <span className="font-bold text-zinc-400">{app.app_name.substring(0, 2).toUpperCase()}</span>
                     </div>
                     <div>
-                      <h3 className="font-semibold text-zinc-100">{app.app_name}</h3>
+                      <h3 className="font-semibold text-zinc-100 group-hover:text-white">{app.app_name}</h3>
                       <p className="text-xs text-zinc-500 flex items-center gap-1">
                         <GitBranch className="h-3 w-3" /> main
                       </p>
@@ -152,7 +119,7 @@ const Dashboard: React.FC = () => {
                   <Badge status={app.status} />
                 </div>
                 
-                <div className="space-y-2 mb-6">
+                <div className="space-y-3 mb-4">
                   <div className="flex justify-between text-sm">
                     <span className="text-zinc-500">Framework</span>
                     <span className="text-zinc-300 capitalize">{app.framework}</span>
@@ -162,43 +129,19 @@ const Dashboard: React.FC = () => {
                     <span className="font-mono text-zinc-300">{app.port}</span>
                   </div>
                   {app.access_url && (
-                    <a 
-                      href={app.access_url} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="flex items-center text-sm text-blue-400 hover:text-blue-300 mt-2 truncate"
-                    >
+                    <div className="flex items-center text-sm text-blue-400 mt-2 truncate">
                       <ExternalLink className="mr-1 h-3 w-3" />
-                      {app.access_url}
-                    </a>
+                      <span className="truncate">{app.access_url}</span>
+                    </div>
                   )}
                 </div>
               </div>
 
-              <div className="flex gap-2 pt-4 border-t border-zinc-900">
-                <Button 
-                  variant="secondary" 
-                  className="flex-1 text-xs h-8"
-                  onClick={() => {
-                    setSelectedApp(app);
-                    setRedeployEnv(''); 
-                    setIsRedeployOpen(true);
-                  }}
-                >
-                  <RefreshCw className="mr-2 h-3 w-3" /> Redeploy
-                </Button>
-                <Button 
-                  variant="ghost" 
-                  className="h-8 px-2 text-zinc-500 hover:text-red-400 hover:bg-red-900/10"
-                  onClick={() => {
-                    setSelectedApp(app);
-                    setIsDeleteOpen(true);
-                  }}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
+              <div className="flex items-center justify-between pt-4 border-t border-zinc-900 mt-auto">
+                <span className="text-xs text-zinc-500">Manage App</span>
+                <ArrowRight className="h-4 w-4 text-zinc-600 group-hover:text-zinc-300 transition-transform group-hover:translate-x-1" />
               </div>
-            </div>
+            </Link>
           ))}
         </div>
       )}
@@ -265,50 +208,6 @@ const Dashboard: React.FC = () => {
             <Button type="submit" isLoading={actionLoading}>Deploy Project</Button>
           </div>
         </form>
-      </Modal>
-
-      {/* Redeploy Modal */}
-      <Modal 
-        isOpen={isRedeployOpen} 
-        onClose={() => setIsRedeployOpen(false)} 
-        title={`Redeploy ${selectedApp?.app_name}`}
-      >
-        <form onSubmit={handleRedeploy} className="space-y-4 mt-4">
-          <p className="text-sm text-zinc-400">
-            This will pull the latest code from the main branch and rebuild your application.
-            You can optionally update environment variables below.
-          </p>
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-zinc-400">New ENV Variables (Optional)</label>
-            <Input 
-              placeholder="KEY=VALUE,KEY2=VALUE2" 
-              value={redeployEnv}
-              onChange={e => setRedeployEnv(e.target.value)}
-            />
-          </div>
-          <div className="flex justify-end gap-2 mt-6">
-            <Button type="button" variant="ghost" onClick={() => setIsRedeployOpen(false)}>Cancel</Button>
-            <Button type="submit" isLoading={actionLoading}>Confirm Redeploy</Button>
-          </div>
-        </form>
-      </Modal>
-
-      {/* Delete Modal */}
-      <Modal 
-        isOpen={isDeleteOpen} 
-        onClose={() => setIsDeleteOpen(false)} 
-        title="Delete Application"
-      >
-        <div className="space-y-4 mt-4">
-          <p className="text-sm text-zinc-400">
-            Are you sure you want to delete <span className="font-bold text-white">{selectedApp?.app_name}</span>? 
-            This action cannot be undone and will stop the running container immediately.
-          </p>
-          <div className="flex justify-end gap-2 mt-6">
-            <Button variant="ghost" onClick={() => setIsDeleteOpen(false)}>Cancel</Button>
-            <Button variant="danger" onClick={handleDelete} isLoading={actionLoading}>Delete App</Button>
-          </div>
-        </div>
       </Modal>
     </div>
   );

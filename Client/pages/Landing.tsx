@@ -12,7 +12,7 @@ const Landing: React.FC = () => {
         <div className="container mx-auto px-4 text-center relative z-10">
           <div className="inline-flex items-center rounded-full border border-zinc-800 bg-zinc-900/50 px-3 py-1 text-sm text-zinc-400 backdrop-blur-xl mb-8">
             <span className="flex h-2 w-2 rounded-full bg-blue-500 mr-2"></span>
-            SkyDeploy v1.0 is now live
+            SkyDeploy v3.6 is now live
           </div>
           <h1 className="text-5xl md:text-7xl font-bold tracking-tight text-white mb-6">
             Deploy your code <br />
