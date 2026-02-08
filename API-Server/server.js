@@ -16,7 +16,7 @@ app.use(cors());
 
 // Or, allow only your dashboard domain:
 app.use(cors({
-  origin: ['http://localhost:3000', 'http://192.168.0.105:3000','http://172.20.144.1:3000'],
+  origin: ['https://skydeploy.tauqeer.site', 'https://skydeploy.vercel.app'],
   methods: ['GET','POST','DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
@@ -36,7 +36,8 @@ const CADDYFILE_PATH = '../reverse-proxy/Caddyfile';
    MongoDB
 ---------------------------------------------------- */
 
-const MONGO_URI = 'mongodb://localhost:27017/MJ';
+// const MONGO_URI = 'mongodb://localhost:27017/MJ';
+const MONGO_URI = 'mongodb+srv://tauqeerahmed90673:m8QPUg6zTPZ0ov9v@cluster0.iu8merq.mongodb.net';
 mongoose.connect(MONGO_URI)
   .then(() => console.log('MongoDB connected'))
   .catch(console.error);
