@@ -2,7 +2,7 @@ import axios from 'axios';
 import { AuthResponse, DeployRequest, RedeployRequest, AppData, Database, CreateDatabaseRequest } from '../types';
 
 // In a real app, this would be an environment variable
-const API_BASE_URL = '31.97.235.108/4000';
+const API_BASE_URL = 'http://31.97.235.108:4000';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
